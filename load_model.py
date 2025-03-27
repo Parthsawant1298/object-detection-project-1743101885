@@ -15,10 +15,11 @@ def main():
     if uploaded_file is not None:
         # Read the image
         image = Image.open(uploaded_file)
-        st.image(image, caption='Uploaded Image', use_container_width=True)
+        st.image(image, caption='Uploaded Image', width=None)
         
         # Save the uploaded image temporarily
-        with open("temp_image.jpg", "wb") as f:
+        temp_path = "temp_image.jpg"
+        with open(temp_path, "wb") as f:
             f.write(uploaded_file.getbuffer())
         
         # Perform object detection
@@ -28,7 +29,7 @@ def main():
                 model = YOLO("best_model.pt")
                 
                 # Run inference
-                results = model.predict(source="temp_image.jpg", conf=0.25)
+                results = model.predict(source=temp_path, conf=0.25)
                 
                 # Get the first result (we only have one image)
                 result = results[0]
@@ -36,7 +37,7 @@ def main():
                 # Display result
                 result_img = result.plot()
                 result_img_rgb = cv2.cvtColor(result_img, cv2.COLOR_BGR2RGB)
-                st.image(result_img_rgb, caption='Detection Result', use_container_width=True)
+                st.image(result_img_rgb, caption='Detection Result', width=None)
                 
                 # Display detection details
                 st.subheader('Detection Results:')
@@ -49,17 +50,15 @@ def main():
                     cls_id = int(box.cls[0].item())
                     class_name = names[cls_id]
                     confidence = box.conf[0].item()
-                    coordinates = box.xyxy[0].tolist()  # get box coordinates in (top, left, bottom, right) format
+                    coordinates = box.xyxy[0].tolist()
                     
                     st.write(f"**Class:** {class_name}, **Confidence:** {confidence:.2f}")
                     st.write(f"**Coordinates:** [x1={coordinates[0]:.1f}, y1={coordinates[1]:.1f}, x2={coordinates[2]:.1f}, y2={coordinates[3]:.1f}]")
                     st.write("---")
                 
                 # Clean up
-                try:
-                    os.remove("temp_image.jpg")
-                except:
-                    pass
+                if os.path.exists(temp_path):
+                    os.remove(temp_path)
 
 if __name__ == "__main__":
     main()
